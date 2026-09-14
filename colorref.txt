@@ -1,0 +1,17 @@
+Raw Color Palette:
+00 00
+00 15
+02 a0
+02 b5
+54 00
+54 15
+55 55
+56 b5
+29 4a
+29 5f
+2b ea
+2b ff
+7d 4a
+7d 5f
+7f ea
+7f ff
