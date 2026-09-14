@@ -56,3 +56,6 @@ dkms.conf
 *.smc
 *.mmap
 *.oops
+
+build.sh
+build.bat
