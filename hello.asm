@@ -20,6 +20,8 @@
 .segment "CODE"
    jmp start
 
+
+.include "triptych.asm"
 VRAM_CHARSET   = $0000 ; must be at $1000 boundary
 VRAM_BG1       = $1000 ; must be at $0400 boundary
 VRAM_BG2       = $1400 ; must be at $0400 boundary
@@ -35,18 +37,23 @@ hello_str: .asciiz "Hello, World!"
 INTCOUNTER = $200 ; Counts Interrups for time-based activities
 SCREENINDEXY = $201 ; Screen Index in Rows (0-32) * 8 Pixels per Row
 THIRTYFRAME = $202 ; Counts 30 frames for things like cursor flash
-CURSORX = $203
-CURSORY = $204
-STREAMBUFFERREADw = $205
-STREAMBUFFERWRITEw = $207
-SCREENBUFFER = $300 ; $300 - $6FF - 1024 bytes  -- Maybe 768 w/ 192 for 4bpp color data
-SCRATCH = $209
+CURSORX = $203 ; Screenbuffer Index X
+CURSORY = $204 ; Screenbuffer Index Y
+STREAMBUFFERREADw = $205 ; Probably unused
+STREAMBUFFERWRITEw = $207 ; Probably Unused
+SCREENBUFFER = $300 ; $300 - $E39 - 1440 bytes  -- Maybe 960 w/ 480 for 4bpp color data
+SCRATCH = $209 ; Word Swapspace
 SCREENBUFFERINDEX = $211
-SCRATCHCHAR = $213
-SCRATCHSCANLINE = $214
-GLYPHA = $215
-GLYPHB = $216
-XINDEXBUFFER = $217
+SCRATCHCHAR = $213 ; Byte Swapspace
+SCRATCHSCANLINE = $214 ; I forgot what this was swap for
+GLYPHA = $215 ; Swap for Glyph A in triptych
+GLYPHB = $216 ; You know what, we may need four or zero, we'll see
+XINDEXBUFFER = $217 ; I need to document this stuff when I make it
+
+TRIPTYCHOFINTEREST = $218 ; 16 bit
+GLYPHOFINTEREST = $21A ; 
+BUFFERMEMORYINDEX = $21B ; 16 bit
+BACKGROUNDMEMORYINDEX = $21D ; 16 bit
 
 
 
@@ -180,6 +187,12 @@ start:
 	 inx
    cpx #(128*8)
    bne @charset_loop
+	 ldx #VRAM_CHARSET+$3C00
+	 stx VMADDL
+	 ldx #$1b
+	 jsr Register2bpp
+	 jsr Register2bpp
+	 
 
    ; Place string tiles in background
 	 rep #$20
@@ -217,9 +230,11 @@ start:
 	 sta VMDATAH
 
 	jsr FillScreenBuffer
-	jsr TestTT
-	jsr TestTTB
-	jsr TestTTC
+	lda #$0
+	sta TRIPTYCHOFINTEREST
+	jsr TTestTT
+	;jsr TestTTB
+	;jsr TestTTC
 ;@enable_display:
    ; Show BG1
    lda #$01
@@ -570,14 +585,67 @@ PushTile:
 BufferLinkBG:
 	phx
 	pha
+	phy
+	rep #$20 ; A 16-bit
+	.a16 ; Assembler directive A 16-bit
+	lda #2324 ; Cancel ASCII tile because any tile $1-$1f is basically unused 
+	;ldy #$23 ; Priority 1 - +3 for tile 960
+	ldy #$0;
 	ldx #0
+	@TopLine:
+		sta VMDATAL
+		inx
+		cpx #32
+		bne @TopLine
 	@BufLink_loop:
-  stx VMDATAL
-  ;lda #$20 ; priority 1
-  ;sta VMDATAH
+	ldx #0
+	lda #2324 ; Cancel ASCII tile because any tile $1-$1f is basically unused 
+	sta VMDATAL ; Border
+	lda #$202a
+	@MainLine:
+	tya
+	sta SCRATCH
+	asl SCRATCH ; x2
+	asl SCRATCH ; x4
+	asl SCRATCH ; x8
+	asl SCRATCH ; x16
+	asl SCRATCH ; x32
+	lda SCRATCH
+	clc
+	sty SCRATCH
+	sbc SCRATCH
+	sbc SCRATCH ; x30
+	stx SCRATCH
+	adc SCRATCH
+	sta VMDATAL
+	inx
+	cpx #30
+	bne @MainLine
+	lda #2324 ; border
+	sta VMDATAL ; border
+	iny
+	cpy #24
+	bne @BufLink_loop
+	ldx #0
+		@BottomLine:
+		sta VMDATAL
+		inx
+		cpx #32
+		bne @BottomLine
+	;; Bottom Empty Buffer
+	lda #$2325 ; Another character
+	ldx $0
+	@EmptyLine:
+		sta VMDATAL
+		inx
+		cpx #128
+		bne @EmptyLine
+	sep #$20 ; A 8-bit
+	.a8
   inx
-	cpx #768
-  bne @BufLink_loop
+	cpx #768-32
+
+	ply
 	pla
 	plx
 	rts
@@ -824,6 +892,8 @@ ClearScreenBuffer:
 	sep #$20 ; A 16-bit
 	.a8 ; Assembler directive A 8-bit
 	rts
+
+
 
 .include "charset.asm"
 
