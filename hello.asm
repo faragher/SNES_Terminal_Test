@@ -154,6 +154,69 @@ start:
 	sta CGDATA
 	lda #$ff
 	sta CGDATA
+; Pal 2
+  stz CGDATA ; Black and transparent
+  stz CGDATA
+	lda #$00  ; Blue
+	sta CGDATA
+	lda #$15
+	sta CGDATA
+	lda #$02   ; Green
+	sta CGDATA
+	lda #$a0
+	sta CGDATA
+	lda #$02   ; Cyan
+	sta CGDATA
+	lda #$b5
+	sta CGDATA
+	lda #$54  ; Red
+	sta CGDATA
+	lda #$00
+	sta CGDATA
+	lda #$54  ; Magenta
+	sta CGDATA
+	lda #$15
+	sta CGDATA
+	lda #$55  ; Yellow/Brown
+	sta CGDATA
+	lda #$55
+	sta CGDATA
+	lda #$56  ; Light Gray
+	sta CGDATA
+	lda #$b5
+	sta CGDATA
+	lda #$29  ; Dark Gray
+	sta CGDATA
+	lda #$4a
+	sta CGDATA
+	lda #$29  ; Bright Blue
+	sta CGDATA
+	lda #$5f
+	sta CGDATA
+	lda #$2b  ; Bright Green
+	sta CGDATA
+	lda #$ea
+	sta CGDATA
+	lda #$2b  ; Bright Cyan
+	sta CGDATA
+	lda #$ff
+	sta CGDATA
+	lda #$7d  ; Bright Red
+	sta CGDATA
+	lda #$4a
+	sta CGDATA
+	lda #$7d  ; Bright Magenta
+	sta CGDATA
+	lda #$5f
+	sta CGDATA
+	lda #$7f  ; Bright Yellow
+	sta CGDATA
+	lda #$ea
+	sta CGDATA
+	lda #$00  ; Blue
+	sta CGDATA
+	lda #$f0
+	sta CGDATA
 
 
    ; Setup Graphics Mode 1, 8x8 tiles all layers
@@ -233,8 +296,10 @@ start:
 	lda #$0
 	sta TRIPTYCHOFINTEREST
 	jsr TTestTT
-	;jsr TestTTB
-	;jsr TestTTC
+	lda #$1b
+	ldx #$324
+	jsr SelectGraphicsTile
+	jsr PushTile
 ;@enable_display:
    ; Show BG1
    lda #$01
@@ -248,7 +313,6 @@ start:
    ; enable NMI for Vertical Blank
    lda #$80
    sta NMITIMEN
-	 
 
 
 game_loop:
@@ -289,288 +353,74 @@ return_int:
    rti
 
 
+;; Subroutines
+
 ;--
-; Test Triptych
 ;
 ;
+;
 ;--
-TestTriptych:
-	ldx #2
-	ldy #12
-	jsr MoveBufferPointer
-	;jsr MoveTilePointer
-	phx
-	ldx SCREENBUFFERINDEX
-	lda SCREENBUFFER,X ; Our screenbuffer character location
-	lda #$41 ; Just . . . just load an A.
-	; Okay, so we need to point to the tile memory space, plus the actual display tile. And we need to do other stuff. This is too complicated for this. We need to drop back to docs.
-	jsr PushTile
-	
-	plx
-	rts
-	
-TestTT:
-	rep #$20
-	.a16
-	; Set VRAM Position
-	ldx #VRAM_CHARSET ; Get CHARSET memory location
-  stx VMADDL ; Tell PPU to set that location as active
-	; ASCII Char to NESfont Position
-	lda #$41 ; Force an 'A' glyph for testing- Be careful of 16 bit ACC when active
-	asl ; x2
-	asl ; x4
-	asl ; x8 because of 8 byte characters
-	tax ; Transfer address to X register
-	lda #$42 ; Force a 'B' glyph for testing
-	asl
-	asl
-	asl ; Bytes
-	tay ; Second glyph to Y
-	; Get Color Info
-	; Skipping . . .
-	sep #$20
-	.a8
-	
-	lda #0
-	sta SCRATCHCHAR ; Loop counter
-	phx
-	phy
-	@TTLoop:
-	lda NESfont,x ; Load first glyph. We're not worried about triptychs at this time - no offset
-	sta GLYPHA
-	lda NESfont,y ; load second glyph
-	lsr
-	lsr
-	lsr
-	lsr
-	lsr
-	lsr	; Six bit right shift
-	; Composite Scanlines
-  ora GLYPHA ; We should have the composite glyph scan line right now.
-	; Upload scanlines in VRAM
-	sta VMDATAL ; This is where color data matters
-	sta VMDATAH
-	inx
-	iny
-	lda SCRATCHCHAR ; Our current loop count
-	clc
-	adc #1
-	sta SCRATCHCHAR
-	cmp #$8
-	bne @TTLoop
-	
-	ply
-	plx
-	lda #0
-	sta SCRATCHCHAR ; Loop counter
+SelectGraphicsTile:
+	pha
+	rep #$20 ; A 16-bit
+	.a16 ; Assembler directive A 16-bit
+	txa ; Input memory location from X
+	asl 
+	asl 
+	asl  ; x8 for bytes
+	asl ; Words
+	sta SCRATCH ; Store Byte Indes
+	lda #VRAM_CHARSET ; Get Base Address
+	clc ; Clear that nefarious carry
+	adc SCRATCH ; Input Index
+	tax ; Reurn memory location in X
+	sep #$20 ; A 8-bit
+	.a8 ; Assembler directive A 8-bit
+	pla
+  rts
 
-	@TTLoopA:
-	lda NESfont,x ; Load first glyph. We're not worried about triptychs at this time - no offset
-	sta GLYPHA
-	lda NESfont,y ; load second glyph
-	lsr
-	lsr
-	lsr
-	lsr
-	lsr
-	lsr	; Six bit right shift
-	; Composite Scanlines
-  ora GLYPHA ; We should have the composite glyph scan line right now.
-	; Upload scanlines in VRAM
-	sta VMDATAL ; This is where color data matters
-	sta VMDATAH
-	inx
-	iny
-	lda SCRATCHCHAR ; Our current loop count
-	clc
-	adc #1
-	sta SCRATCHCHAR
-	cmp #$8
-	bne @TTLoopA
-	rts
-
-TestTTB:
-	rep #$20
-	.a16
-	; Set VRAM Position
-
-	; ASCII Char to NESfont Position
-	lda #$42 ; Force an 'B' glyph for testing- Be careful of 16 bit ACC when active
-	asl ; x2
-	asl ; x4
-	asl ; x8 because of 8 byte characters
-	tax ; Transfer address to X register
-	lda #$43 ; Force a 'C' glyph for testing
-	asl
-	asl
-	asl
-	tay ; Second glyph to Y
-	; Get Color Info
-	; Skipping . . .
-	sep #$20
-	.a8
-	
-	lda #0
-	sta SCRATCHCHAR ; Loop counter
-	phx
-	phy
-	@TTLoop:
-	lda NESfont,x ; Load first glyph. We're not worried about triptychs at this time - no offset
-	asl
-	asl
-	sta GLYPHA
-	lda NESfont,y ; load second glyph
-	lsr
-	lsr
-	lsr
-	lsr	; four bit right shift
-	; Composite Scanlines
-  ora GLYPHA ; We should have the composite glyph scan line right now.
-	; Upload scanlines in VRAM
-	sta VMDATAL ; This is where color data matters
-	sta VMDATAH
-	inx
-	iny
-	lda SCRATCHCHAR ; Our current loop count
-	clc
-	adc #1
-	sta SCRATCHCHAR
-	cmp #$8
-	bne @TTLoop
-	
-	ply
-	plx
-	lda #0
-	sta SCRATCHCHAR ; Loop counter
-
-	@TTLoopA:
-	lda NESfont,x ; Load first glyph. We're not worried about triptychs at this time - no offset
-	asl
-	asl
-	sta GLYPHA
-	lda NESfont,y ; load second glyph
-	lsr
-	lsr
-	lsr
-	lsr	; Four bit right shift
-	; Composite Scanlines
-  ora GLYPHA ; We should have the composite glyph scan line right now.
-	; Upload scanlines in VRAM
-	sta VMDATAL ; This is where color data matters
-	sta VMDATAH
-	inx
-	iny
-	lda SCRATCHCHAR ; Our current loop count
-	clc
-	adc #1
-	sta SCRATCHCHAR
-	cmp #$8
-	bne @TTLoopA
-	rts
-	
-TestTTC:
-	rep #$20
-	.a16
-	; Set VRAM Position
-
-	; ASCII Char to NESfont Position
-	lda #$43 ; Force an 'A' glyph for testing- Be careful of 16 bit ACC when active
-	asl ; x2
-	asl ; x4
-	asl ; x8 because of 8 byte characters
-	tax ; Transfer address to X register
-	lda #$44 ; Force a 'B' glyph for testing
-	asl
-	asl
-	asl ; Bytes
-	tay ; Second glyph to Y
-	; Get Color Info
-	; Skipping . . .
-	sep #$20
-	.a8
-	
-	lda #0
-	sta SCRATCHCHAR ; Loop counter
-	phx
-	phy
-	@TTLoop:
-	lda NESfont,x ; Load first glyph. We're not worried about triptychs at this time - no offset
-	asl
-	asl
-	asl
-	asl
-	sta GLYPHA
-	lda NESfont,y ; load second glyph
-	lsr
-	lsr	; Two bit right shift
-	; Composite Scanlines
-  ora GLYPHA ; We should have the composite glyph scan line right now.
-	; Upload scanlines in VRAM
-	sta VMDATAL ; This is where color data matters
-	sta VMDATAH
-	inx
-	iny
-	lda SCRATCHCHAR ; Our current loop count
-	clc
-	adc #1
-	sta SCRATCHCHAR
-	cmp #$8
-	bne @TTLoop
-	
-	ply
-	plx
-	lda #0
-	sta SCRATCHCHAR ; Loop counter
-
-	@TTLoopA:
-	lda NESfont,x ; Load first glyph. We're not worried about triptychs at this time - no offset
-	asl
-	asl
-	asl
-	asl
-	sta GLYPHA
-	lda NESfont,y ; load second glyph
-	lsr
-	lsr	; Two bit right shift
-	; Composite Scanlines
-  ora GLYPHA ; We should have the composite glyph scan line right now.
-	; Upload scanlines in VRAM
-	sta VMDATAL ; This is where color data matters
-	sta VMDATAH
-	inx
-	iny
-	lda SCRATCHCHAR ; Our current loop count
-	clc
-	adc #1
-	sta SCRATCHCHAR
-	cmp #$8
-	bne @TTLoopA
-	rts
 
 ;-- 
 ; TileMapSingleChar
-;
+; in: ACC - Character, X - Graphics Tile Location
 ;
 ;--	
 PushTile: 
 	pha
 	phy
 	phx
-	ldy #$0
+	stx VMADDL
+	ldy #$0000
+	rep #$20 ; A 16-bit
+	.a16 ; Assembler directive A 16-bit
+	and #$00ff ; Clear the upper byte
+asl
+asl
+asl
+  tay 	
+	phy
+	sep #$20 ; A 8-bit
+	.a8 ; Assembler directive A 8-bit
+	ldx #0
 	@PushTileLoop:
-	sta VMDATAL ; For some color ; We're pusing the wrong thing to the wrong place.
+	lda NESfont,y
+	sta VMDATAL ;
   sta VMDATAH ; (%0011 or 1100?)
-  inx
+	inx
 	iny
-	cpy #$08
+	cpx #$08
 	bne @PushTileLoop
+	ply
+	ldx #0
 	@PushTileLoopA:
-	stz VMDATAL
-	stz VMDATAH
-  inx
+	lda NESfont,y
+	sta VMDATAL
+	sta VMDATAH
 	iny
-	cpy #$08
+	inx
+	cpx #$08
 	bne @PushTileLoopA
+
 	plx
 	ply
 	pla
@@ -588,7 +438,9 @@ BufferLinkBG:
 	phy
 	rep #$20 ; A 16-bit
 	.a16 ; Assembler directive A 16-bit
-	lda #2324 ; Cancel ASCII tile because any tile $1-$1f is basically unused 
+	lda #$2724 ; Cancel ASCII tile because any tile $1-$1f is basically unused 
+			; $2324 %0010 0011 0010 0100 - Pal 0, priority, base
+			; $2724 %0010 0111 0010 0100 - Pal 1, Priority, new
 	;ldy #$23 ; Priority 1 - +3 for tile 960
 	ldy #$0;
 	ldx #0
@@ -599,7 +451,7 @@ BufferLinkBG:
 		bne @TopLine
 	@BufLink_loop:
 	ldx #0
-	lda #2324 ; Cancel ASCII tile because any tile $1-$1f is basically unused 
+	lda #$2724 ; Cancel ASCII tile because any tile $1-$1f is basically unused 
 	sta VMDATAL ; Border
 	lda #$202a
 	@MainLine:
@@ -613,15 +465,17 @@ BufferLinkBG:
 	lda SCRATCH
 	clc
 	sty SCRATCH
+	sec
 	sbc SCRATCH
 	sbc SCRATCH ; x30
 	stx SCRATCH
+	clc
 	adc SCRATCH
 	sta VMDATAL
 	inx
 	cpx #30
 	bne @MainLine
-	lda #2324 ; border
+	lda #$2724 ; border
 	sta VMDATAL ; border
 	iny
 	cpy #24
@@ -633,7 +487,7 @@ BufferLinkBG:
 		cpx #32
 		bne @BottomLine
 	;; Bottom Empty Buffer
-	lda #$2325 ; Another character
+	lda #$2724 ; Another character
 	ldx $0
 	@EmptyLine:
 		sta VMDATAL
