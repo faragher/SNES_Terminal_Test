@@ -239,10 +239,20 @@ TTestTT:
 	;ldx #VRAM_CHARSET ; Get CHARSET memory location
   ;stx VMADDL ; Tell PPU to set that location as active
 	; ASCII Char to NESfont Position
-	lda #$43 ; Force an 'A' glyph for testing- Be careful of 16 bit ACC when active
+	ldx BUFFERMEMORYINDEX
+	inx
+	inx
+	lda SCREENBUFFER,X
+	and #$00ff
+	;;lda #$42 ; Force an 'A' glyph for testing- Be careful of 16 bit ACC when active
 	jsr ACCMul8 ; x8 for 8 byte characters
 	tax ; Transfer address to X register
-	lda #$44 ; Force a 'B' glyph for testing
+	ldy BUFFERMEMORYINDEX
+	iny
+	iny
+	iny
+	lda SCREENBUFFER,Y;
+	and #$00ff
 	jsr ACCMul8 ; x8 for 8 byte characters
 	tay ; Second glyph to Y
 	; Get Color Info
