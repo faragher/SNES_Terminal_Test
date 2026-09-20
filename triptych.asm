@@ -1,7 +1,7 @@
 ;---
 ; Get Triptych from CursorXY State
-;
-;
+; In: None, All RAM
+; Out: ACC - Triptych X pos (0-9)
 ;---
 GetTrypticFromCursor:
 	lda CURSORX ; Load Cursor X Position
@@ -10,6 +10,22 @@ GetTrypticFromCursor:
 	sta TRIPTYCHOFINTEREST
 	
 	rts
+
+;---
+; Get screenbuffer RAM location from X/Y Index
+; In: None, all RAM locations
+; Out: X - RAM location
+;---
+GetScreenbufferMemoryPosition:
+	pha
+	lda CURSORY
+	jsr ACCMul40
+	clc
+	adc CURSORX
+	tax
+	pla
+	rts
+	
 
 
 ;---
@@ -118,6 +134,29 @@ ACCMul8:
 	asl ; x8 because of 8 byte characters
 	rts
 
+ACCMul32:
+	asl ; x2
+	asl ; x4
+	asl ; x8
+	asl ; x16
+	asl ; x32
+	rts
+
+ACCMul40:
+	pha
+	asl ; x2
+	asl ; x4
+	asl ; x8
+	asl ; x16
+	asl ; x32
+	sta SCRATCH
+	pla
+	asl ; x2
+	asl ; x4
+	clc
+	adc SCRATCH
+	rts
+
 TTestTT:
   ; Panel X
 	rep #$20
@@ -126,7 +165,23 @@ TTestTT:
 	ldx #VRAM_CHARSET ; Get CHARSET memory location
   stx VMADDL ; Tell PPU to set that location as active
 	; ASCII Char to NESfont Position
-	lda #$41 ; Force an 'A' glyph for testing- Be careful of 16 bit ACC when active
+	lda TRIPTYCHOFINTEREST ; X Position of Triptych
+	and #$00ff ; Because we're loading 16 bits on an 8 bit memory location
+	asl ; x 2
+	asl ; x 4
+	sta SCRATCH ; Store X Pos of leftmost memory location
+	lda CURSORY ; 
+	jsr ACCMul40 ; 40 x Y pos for memory location
+	clc ;
+	adc SCRATCH ; 40*Y+4*Triptych index
+	;; adc #SCREENBUFFER ; Add Screenbuffer base address
+	sta SCRATCH ; Save memory Offset
+	tax ; More running around for indexed mode since I can't indirect
+	lda SCREENBUFFER,X ; Sure, fine
+	sta SCRATCH ; Store the memory location in SCRATCH
+	lda SCRATCH ; Load char from location
+	and #$00ff ; Yup, 16 to 8 bit again
+	;;lda #$41 ; Force an 'A' glyph for testing- Be careful of 16 bit ACC when active
 	jsr ACCMul8 ; x8 for 8 byte characters
 	tax ; Transfer address to X register
 	lda #$42 ; Force a 'B' glyph for testing
@@ -190,163 +245,6 @@ TTestTT:
 	jsr TwoBPPUploadZ
 	rts
 
-TTestTTB:
-	rep #$20
-	.a16
-	; Set VRAM Position
-
-	; ASCII Char to NESfont Position
-	lda #$42 ; Force an 'B' glyph for testing- Be careful of 16 bit ACC when active
-	asl ; x2
-	asl ; x4
-	asl ; x8 because of 8 byte characters
-	tax ; Transfer address to X register
-	lda #$43 ; Force a 'C' glyph for testing
-	asl
-	asl
-	asl
-	tay ; Second glyph to Y
-	; Get Color Info
-	; Skipping . . .
-	sep #$20
-	.a8
-	
-	lda #0
-	sta SCRATCHCHAR ; Loop counter
-	phx
-	phy
-	@TTLoop:
-	lda NESfont,x ; Load first glyph. We're not worried about triptychs at this time - no offset
-	asl
-	asl
-	sta GLYPHA
-	lda NESfont,y ; load second glyph
-	lsr
-	lsr
-	lsr
-	lsr	; four bit right shift
-	; Composite Scanlines
-  ora GLYPHA ; We should have the composite glyph scan line right now.
-	; Upload scanlines in VRAM
-	sta VMDATAL ; This is where color data matters
-	sta VMDATAH
-	inx
-	iny
-	lda SCRATCHCHAR ; Our current loop count
-	clc
-	adc #1
-	sta SCRATCHCHAR
-	cmp #$8
-	bne @TTLoop
-	
-	ply
-	plx
-	lda #0
-	sta SCRATCHCHAR ; Loop counter
-
-	@TTLoopA:
-	lda NESfont,x ; Load first glyph. We're not worried about triptychs at this time - no offset
-	asl
-	asl
-	sta GLYPHA
-	lda NESfont,y ; load second glyph
-	lsr
-	lsr
-	lsr
-	lsr	; Four bit right shift
-	; Composite Scanlines
-  ora GLYPHA ; We should have the composite glyph scan line right now.
-	; Upload scanlines in VRAM
-	sta VMDATAL ; This is where color data matters
-	sta VMDATAH
-	inx
-	iny
-	lda SCRATCHCHAR ; Our current loop count
-	clc
-	adc #1
-	sta SCRATCHCHAR
-	cmp #$8
-	bne @TTLoopA
-	rts
-	
-TTestTTC:
-	rep #$20
-	.a16
-	; Set VRAM Position
-
-	; ASCII Char to NESfont Position
-	lda #$43 ; Force an 'A' glyph for testing- Be careful of 16 bit ACC when active
-	asl ; x2
-	asl ; x4
-	asl ; x8 because of 8 byte characters
-	tax ; Transfer address to X register
-	lda #$44 ; Force a 'B' glyph for testing
-	asl
-	asl
-	asl ; Bytes
-	tay ; Second glyph to Y
-	; Get Color Info
-	; Skipping . . .
-	sep #$20
-	.a8
-	
-	lda #0
-	sta SCRATCHCHAR ; Loop counter
-	phx
-	phy
-	@TTLoop:
-	lda NESfont,x ; Load first glyph. We're not worried about triptychs at this time - no offset
-	asl
-	asl
-	asl
-	asl
-	sta GLYPHA
-	lda NESfont,y ; load second glyph
-	lsr
-	lsr	; Two bit right shift
-	; Composite Scanlines
-  ora GLYPHA ; We should have the composite glyph scan line right now.
-	; Upload scanlines in VRAM
-	sta VMDATAL ; This is where color data matters
-	sta VMDATAH
-	inx
-	iny
-	lda SCRATCHCHAR ; Our current loop count
-	clc
-	adc #1
-	sta SCRATCHCHAR
-	cmp #$8
-	bne @TTLoop
-	
-	ply
-	plx
-	lda #0
-	sta SCRATCHCHAR ; Loop counter
-
-	@TTLoopA:
-	lda NESfont,x ; Load first glyph. We're not worried about triptychs at this time - no offset
-	asl
-	asl
-	asl
-	asl
-	sta GLYPHA
-	lda NESfont,y ; load second glyph
-	lsr
-	lsr	; Two bit right shift
-	; Composite Scanlines
-  ora GLYPHA ; We should have the composite glyph scan line right now.
-	; Upload scanlines in VRAM
-	sta VMDATAL ; This is where color data matters
-	sta VMDATAH
-	inx
-	iny
-	lda SCRATCHCHAR ; Our current loop count
-	clc
-	adc #1
-	sta SCRATCHCHAR
-	cmp #$8
-	bne @TTLoopA
-	rts	
 	
 	
 	

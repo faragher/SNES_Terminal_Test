@@ -79,6 +79,8 @@ start:
 	stz STREAMBUFFERWRITEw+1
 	stz STREAMBUFFERREADw
 	stz STREAMBUFFERREADw+1
+	stz CURSORX
+	stz CURSORY
 
 
 @loop:
@@ -294,7 +296,8 @@ start:
 
 	jsr FillScreenBuffer
 	lda #$0
-	sta TRIPTYCHOFINTEREST
+	; sta TRIPTYCHOFINTEREST
+	jsr GetTrypticFromCursor
 	jsr TTestTT
 	lda #$1b
 	ldx #$324
