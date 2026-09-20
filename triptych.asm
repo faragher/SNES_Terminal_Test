@@ -35,8 +35,8 @@ GetScreenbufferMemoryPosition:
 ; mod: ACC, processor state (like carry)
 ;---
 
-UpdateTriptych:
-	rts
+;UpdateTriptych:
+;	rts
 
 TwoBPPUploadX:
 	lda #0
@@ -149,19 +149,21 @@ ACCMul40:
 	asl ; x8
 	asl ; x16
 	asl ; x32
-	sta SCRATCH
+	sta MATHSCRATCH
 	pla
 	asl ; x2
 	asl ; x4
 	clc
-	adc SCRATCH
+	adc MATHSCRATCH
 	rts
 
-TTestTT:
+UpdateTriptych:
+;TTestTT:
   ; Panel X
 	rep #$20
 	.a16
 	; Set VRAM Position
+	; TO DO - Set the proper character location
 	ldx #VRAM_CHARSET ; Get CHARSET memory location
   stx VMADDL ; Tell PPU to set that location as active
 	; ASCII Char to NESfont Position

@@ -54,6 +54,8 @@ TRIPTYCHOFINTEREST = $218 ; 16 bit
 GLYPHOFINTEREST = $21A ; 
 BUFFERMEMORYINDEX = $21B ; 16 bit
 BACKGROUNDMEMORYINDEX = $21D ; 16 bit
+SCREENINDEXSCRATCH = $21F ; 16 Bit
+MATHSCRATCH = $221 ; 16 bit
 
 
 
@@ -298,7 +300,8 @@ start:
 	lda #$0
 	; sta TRIPTYCHOFINTEREST
 	jsr GetTrypticFromCursor
-	jsr TTestTT
+	jsr UpdateTriptych
+	jsr RefreshScreen
 	lda #$1b
 	ldx #$324
 	jsr SelectGraphicsTile
@@ -519,6 +522,87 @@ PutCharBuffer:
 	inx
 	stx SCREENBUFFERINDEX
 	plx
+	rts
+
+;--
+; Make char at cursor
+;
+;
+;--
+
+;--
+; increment cursor
+;
+;
+;--
+IncCursor:
+	clc
+	phx
+	lda CURSORX
+	adc #$01
+	tax
+	cpx #$40
+	bne @NotEOL
+	ldx #$00
+	iny
+	cpy #$24
+	bne @NotEOL
+	ldy #$23
+	@NotEOL:
+	txa
+	sta CURSORX
+	tya
+	sta CURSORY
+	plx
+	rts
+
+IncCursor4:
+	clc
+	phx
+	lda CURSORX
+	adc #$04
+	tax
+	cpx #$40
+	bne @NotEOL
+	ldx #$00
+	iny
+	cpy #$24
+	bne @NotEOL
+	ldy #$24 ; Breaks screen scroll for clearing purposes
+	@NotEOL:
+	txa
+	sta CURSORX
+	tya
+	sta CURSORY
+	plx
+	rts
+
+ScreenScroll:
+	; Pull all screenbuffer down 40 bytes
+	rts
+	
+;--
+; Refresh Screen Triptychs
+;
+;--
+
+RefreshScreen:
+	ldx #$00
+	stz SCREENINDEXSCRATCH
+	stz CURSORX
+	stz CURSORY
+	@WriteTriptych:
+	ldx SCREENINDEXSCRATCH
+	jsr GetTrypticFromCursor
+	jsr UpdateTriptych
+	inx
+	inx
+	inx
+	inx
+	jsr IncCursor4
+	stx SCREENINDEXSCRATCH
+	cpx #960 ; (40*24)
+	bne @WriteTriptych
 	rts
 	
 ;--
