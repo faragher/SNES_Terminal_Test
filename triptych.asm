@@ -175,16 +175,19 @@ TTestTT:
 	clc ;
 	adc SCRATCH ; 40*Y+4*Triptych index
 	;; adc #SCREENBUFFER ; Add Screenbuffer base address
-	sta SCRATCH ; Save memory Offset
+	sta BUFFERMEMORYINDEX ; Save memory Offset
 	tax ; More running around for indexed mode since I can't indirect
-	lda SCREENBUFFER,X ; Sure, fine
-	sta SCRATCH ; Store the memory location in SCRATCH
-	lda SCRATCH ; Load char from location
+	lda SCREENBUFFER,X ; Load Char from location
+	;lda BUFFERMEMORYINDEX ; Load char from location
 	and #$00ff ; Yup, 16 to 8 bit again
 	;;lda #$41 ; Force an 'A' glyph for testing- Be careful of 16 bit ACC when active
 	jsr ACCMul8 ; x8 for 8 byte characters
 	tax ; Transfer address to X register
-	lda #$42 ; Force a 'B' glyph for testing
+	;;lda #$42 ; Force a 'B' glyph for testing
+	ldy BUFFERMEMORYINDEX;
+	iny ; BUFFERMEMORYINDEX + 1
+	lda SCREENBUFFER,Y;
+	and #$00ff
 	jsr ACCMul8 ; x8 for 8 byte characters
 	tay ; Second glyph to Y
 	; Get Color Info
@@ -204,10 +207,19 @@ TTestTT:
 	;ldx #VRAM_CHARSET ; Get CHARSET memory location
   ;stx VMADDL ; Tell PPU to set that location as active
 	; ASCII Char to NESfont Position
-	lda #$42 ; Force an 'A' glyph for testing- Be careful of 16 bit ACC when active
+	ldx BUFFERMEMORYINDEX
+	inx
+	lda SCREENBUFFER,X
+	and #$00ff
+	;;lda #$42 ; Force an 'A' glyph for testing- Be careful of 16 bit ACC when active
 	jsr ACCMul8 ; x8 for 8 byte characters
 	tax ; Transfer address to X register
-	lda #$43 ; Force a 'B' glyph for testing
+	ldy BUFFERMEMORYINDEX
+	iny
+	iny
+	lda SCREENBUFFER,Y;
+	and #$00ff
+	;;lda #$43 ; Force a 'B' glyph for testing
 	jsr ACCMul8 ; x8 for 8 byte characters
 	tay ; Second glyph to Y
 	; Get Color Info
