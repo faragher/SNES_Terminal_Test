@@ -69,6 +69,7 @@ TwoBPPUploadX:
 	rts
 	
 TwoBPPUploadY:
+	
 	lda #0
 	sta SCRATCHCHAR ; Loop counter
 	@TTLoop:
@@ -156,21 +157,43 @@ ACCMul40:
 	clc
 	adc MATHSCRATCH
 	rts
+	
+ACCMul3:
+	phx
+	tax
+	lda TriLookup,X ; Lookup Mul by 3 (range 0-30 out) - No error handling!
+	plx
+	rts
 
 UpdateTriptych:
 ;TTestTT:
   ; Panel X
+	phx
 	rep #$20
 	.a16
 	; Set VRAM Position
-	; TO DO - Set the proper character location
-	ldx #VRAM_CHARSET ; Get CHARSET memory location
-  stx VMADDL ; Tell PPU to set that location as active
+	; Need to increment VMADD by the proper number of bytes.
+	lda CURSORY;
+	and #$00ff
+	jsr ACCMul40 ;
+	sta SCRATCH
+	lda CURSORX ;
+	jsr ACCMul3 ; Multiply by three - Is the Y wrong? Need to update
+	and #$00ff ; 
+	clc
+	; At 4 bpp, it's four bytes per character
+	adc SCRATCH ; General cursor -> offset in bytes
+	asl ; x2
+	asl ; x4
+	sta SCRATCH
+	lda #VRAM_CHARSET
+	adc SCRATCH ; This should be where we want to put a new tile
+	; Ignore all of that for testing
+	; ldx #VRAM_CHARSET ; Get CHARSET memory location
+  sta VMADDL ; Tell PPU to set that location as active
 	; ASCII Char to NESfont Position
 	lda TRIPTYCHOFINTEREST ; X Position of Triptych
 	and #$00ff ; Because we're loading 16 bits on an 8 bit memory location
-	asl ; x 2
-	asl ; x 4
 	sta SCRATCH ; Store X Pos of leftmost memory location
 	lda CURSORY ; 
 	jsr ACCMul40 ; 40 x Y pos for memory location
@@ -267,6 +290,7 @@ UpdateTriptych:
 	ply
 	plx
 	jsr TwoBPPUploadZ
+	plx
 	rts
 
 	

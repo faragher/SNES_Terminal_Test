@@ -22,6 +22,7 @@
 
 
 .include "triptych.asm"
+.include "video.asm"
 VRAM_CHARSET   = $0000 ; must be at $1000 boundary
 VRAM_BG1       = $1000 ; must be at $0400 boundary
 VRAM_BG2       = $1400 ; must be at $0400 boundary
@@ -32,6 +33,8 @@ START_Y        = 0
 START_TM_ADDR  = VRAM_BG1 + 32*START_Y + START_X
 
 hello_str: .asciiz "Hello, World!"
+palette: .incbin "palette1.bin"
+  .incbin "palette2.bin"
 
  ;--- Test Attributes
 INTCOUNTER = $200 ; Counts Interrups for time-based activities
@@ -83,6 +86,8 @@ start:
 	stz STREAMBUFFERREADw+1
 	stz CURSORX
 	stz CURSORY
+	stz SCREENINDEXSCRATCH
+	stz SCREENINDEXSCRATCH+1
 
 
 @loop:
@@ -94,134 +99,7 @@ start:
    lda #128
    sta INIDISP ; undo the accidental stz to 2100h due to BPL actually being a branch on nonnegative
 	jsr ClearScreenBuffer
-@LoadPalette: ; Load EGA Palette
-  stz CGADD ; start with color 0 (background)
-  stz CGDATA ; Black and transparent
-  stz CGDATA
-	lda #$00  ; Blue
-	sta CGDATA
-	lda #$15
-	sta CGDATA
-	lda #$02   ; Green
-	sta CGDATA
-	lda #$a0
-	sta CGDATA
-	lda #$02   ; Cyan
-	sta CGDATA
-	lda #$b5
-	sta CGDATA
-	lda #$54  ; Red
-	sta CGDATA
-	lda #$00
-	sta CGDATA
-	lda #$54  ; Magenta
-	sta CGDATA
-	lda #$15
-	sta CGDATA
-	lda #$55  ; Yellow/Brown
-	sta CGDATA
-	lda #$55
-	sta CGDATA
-	lda #$56  ; Light Gray
-	sta CGDATA
-	lda #$b5
-	sta CGDATA
-	lda #$29  ; Dark Gray
-	sta CGDATA
-	lda #$4a
-	sta CGDATA
-	lda #$29  ; Bright Blue
-	sta CGDATA
-	lda #$5f
-	sta CGDATA
-	lda #$2b  ; Bright Green
-	sta CGDATA
-	lda #$ea
-	sta CGDATA
-	lda #$2b  ; Bright Cyan
-	sta CGDATA
-	lda #$ff
-	sta CGDATA
-	lda #$7d  ; Bright Red
-	sta CGDATA
-	lda #$4a
-	sta CGDATA
-	lda #$7d  ; Bright Magenta
-	sta CGDATA
-	lda #$5f
-	sta CGDATA
-	lda #$7f  ; Bright Yellow
-	sta CGDATA
-	lda #$ea
-	sta CGDATA
-	lda #$7f  ; Bright White
-	sta CGDATA
-	lda #$ff
-	sta CGDATA
-; Pal 2
-  stz CGDATA ; Black and transparent
-  stz CGDATA
-	lda #$00  ; Blue
-	sta CGDATA
-	lda #$15
-	sta CGDATA
-	lda #$02   ; Green
-	sta CGDATA
-	lda #$a0
-	sta CGDATA
-	lda #$02   ; Cyan
-	sta CGDATA
-	lda #$b5
-	sta CGDATA
-	lda #$54  ; Red
-	sta CGDATA
-	lda #$00
-	sta CGDATA
-	lda #$54  ; Magenta
-	sta CGDATA
-	lda #$15
-	sta CGDATA
-	lda #$55  ; Yellow/Brown
-	sta CGDATA
-	lda #$55
-	sta CGDATA
-	lda #$56  ; Light Gray
-	sta CGDATA
-	lda #$b5
-	sta CGDATA
-	lda #$29  ; Dark Gray
-	sta CGDATA
-	lda #$4a
-	sta CGDATA
-	lda #$29  ; Bright Blue
-	sta CGDATA
-	lda #$5f
-	sta CGDATA
-	lda #$2b  ; Bright Green
-	sta CGDATA
-	lda #$ea
-	sta CGDATA
-	lda #$2b  ; Bright Cyan
-	sta CGDATA
-	lda #$ff
-	sta CGDATA
-	lda #$7d  ; Bright Red
-	sta CGDATA
-	lda #$4a
-	sta CGDATA
-	lda #$7d  ; Bright Magenta
-	sta CGDATA
-	lda #$5f
-	sta CGDATA
-	lda #$7f  ; Bright Yellow
-	sta CGDATA
-	lda #$ea
-	sta CGDATA
-	lda #$00  ; Blue
-	sta CGDATA
-	lda #$f0
-	sta CGDATA
-
+	jsr LoadPalettes
 
    ; Setup Graphics Mode 1, 8x8 tiles all layers
 	 lda #$01
@@ -563,7 +441,7 @@ IncCursor4:
 	adc #$04
 	tax
 	cpx #$40
-	bne @NotEOL
+	bcc @NotEOL
 	ldx #$00
 	iny
 	cpy #$24
@@ -602,7 +480,7 @@ RefreshScreen:
 	jsr IncCursor4
 	stx SCREENINDEXSCRATCH
 	cpx #960 ; (40*24)
-	bne @WriteTriptych
+	bcc @WriteTriptych
 	rts
 	
 ;--
@@ -849,6 +727,7 @@ TriLookup:
 .byte 21
 .byte 24
 .byte 27
+.byte 30
 
 .segment "VECTORS"
 .word 0, 0        ;Native mode vectors
