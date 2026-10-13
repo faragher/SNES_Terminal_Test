@@ -154,6 +154,7 @@ ACCMul40:
 	pla
 	asl ; x2
 	asl ; x4
+	asl ; x8
 	clc
 	adc MATHSCRATCH
 	rts
@@ -174,15 +175,30 @@ UpdateTriptych:
 	; Set VRAM Position
 	; Need to increment VMADD by the proper number of bytes.
 	lda CURSORY;
-	and #$00ff
-	jsr ACCMul40 ;
-	sta SCRATCH
-	lda CURSORX ;
-	jsr ACCMul3 ; Multiply by three - Is the Y wrong? Need to update
-	and #$00ff ; 
+	;and #$00ff
+	jsr ACCMul40 ; For each row (Y-pos) we advance 40 characters
+	sta SCRATCH ; Store Y*40 in scratch memory
+	lda CURSORX ; Cursor is a 40 col display, VRAM is 3/4 the cursor position
 	clc
-	; At 4 bpp, it's four bytes per character
 	adc SCRATCH ; General cursor -> offset in bytes
+	sta BUFFERMEMORYINDEX ; Store location in backbuffer, in characters
+	lda CURSORY
+	jsr ACCMul32 ; For each row we advance 32 tiles
+	sta SCRATCH
+	lda CURSORX ; VRAM is 3/4
+	lsr ; /2
+	lsr ; /4
+	jsr ACCMul3 ; Multiply by three
+	clc
+	adc SCRATCH
+	sta BACKGROUNDMEMORYINDEX
+	sta VMADDL ; Tell PPU to set that location as active
+	; ASCII Char to NESfont Position
+	
+	; adx ; I don't like that I forgot what this was - invalid opcode anyway?
+	
+	; At 4 bpp, it's four bytes per character
+  lda BUFFERMEMORYINDEX
 	asl ; x2
 	asl ; x4
 	sta SCRATCH
@@ -190,8 +206,7 @@ UpdateTriptych:
 	adc SCRATCH ; This should be where we want to put a new tile
 	; Ignore all of that for testing
 	; ldx #VRAM_CHARSET ; Get CHARSET memory location
-  sta VMADDL ; Tell PPU to set that location as active
-	; ASCII Char to NESfont Position
+  
 	lda TRIPTYCHOFINTEREST ; X Position of Triptych
 	and #$00ff ; Because we're loading 16 bits on an 8 bit memory location
 	sta SCRATCH ; Store X Pos of leftmost memory location
@@ -297,10 +312,12 @@ UpdateTriptych:
 	
 	
 	
-; Reference
+; Reference - for Notepad++ autocomplete, addresses outdated
 ; CURSORX = $203 ; Screenbuffer Index X
 ; CURSORY = $204 ; Screenbuffer Index Y
 ; TRIPTYCHOFINTEREST = $218 ; 16 bit
 ; GLYPHOFINTEREST = $21A ; 
 ; BUFFERMEMORYINDEX = $21B ; 16 bit
 ; BACKGROUNDMEMORYINDEX = $21D ; 16 bit
+; BACKGROUNDMEMORYINDEX = $21D ; 16 bit
+; SCREENINDEXSCRATCH = $21F ; 16 Bit

@@ -23,6 +23,7 @@
 
 .include "triptych.asm"
 .include "video.asm"
+.include "test.asm"
 VRAM_CHARSET   = $0000 ; must be at $1000 boundary
 VRAM_BG1       = $1000 ; must be at $0400 boundary
 VRAM_BG2       = $1400 ; must be at $0400 boundary
@@ -40,8 +41,8 @@ palette: .incbin "palette1.bin"
 INTCOUNTER = $200 ; Counts Interrups for time-based activities
 SCREENINDEXY = $201 ; Screen Index in Rows (0-32) * 8 Pixels per Row
 THIRTYFRAME = $202 ; Counts 30 frames for things like cursor flash
-CURSORX = $203 ; Screenbuffer Index X
-CURSORY = $204 ; Screenbuffer Index Y
+CURSORX = $223 ; Screenbuffer Index X - 16 bit
+CURSORY = $225 ; Screenbuffer Index Y - 16 bit
 STREAMBUFFERREADw = $205 ; Probably unused
 STREAMBUFFERWRITEw = $207 ; Probably Unused
 SCREENBUFFER = $300 ; $300 - $E39 - 1440 bytes  -- Maybe 960 w/ 480 for 4bpp color data
@@ -59,6 +60,18 @@ BUFFERMEMORYINDEX = $21B ; 16 bit
 BACKGROUNDMEMORYINDEX = $21D ; 16 bit
 SCREENINDEXSCRATCH = $21F ; 16 Bit
 MATHSCRATCH = $221 ; 16 bit
+
+; Constants 16 bit
+ONE = $230
+TWO = $232
+ZERO = $234
+
+; Rendering Variables - 16 bit
+GLYPHAINDEX = $240 
+GLYPHBINDEX = $242
+
+; Rendering Variables - 8 bit
+SCRATCHGLYPH = $24b ; Redundant with GLYPHA position
 
 
 
@@ -86,8 +99,27 @@ start:
 	stz STREAMBUFFERREADw+1
 	stz CURSORX
 	stz CURSORY
+	stz CURSORX+1
+	stz CURSORY+1
 	stz SCREENINDEXSCRATCH
 	stz SCREENINDEXSCRATCH+1
+	stz BUFFERMEMORYINDEX
+	stz BACKGROUNDMEMORYINDEX
+	stz BUFFERMEMORYINDEX+1
+	stz BACKGROUNDMEMORYINDEX+1
+	lda #1
+	sta ONE
+	stz ONE+1
+	lda #2
+	sta TWO
+	stz TWO+1
+	stz ZERO
+	stz ZERO+1
+	stz GLYPHAINDEX
+	stz GLYPHBINDEX
+	stz GLYPHAINDEX+1
+	stz GLYPHBINDEX+1
+	
 
 
 @loop:
@@ -167,7 +199,7 @@ start:
 	 @enable_display:
 	 ldx #$0;
 	 ldy #$0;
-	 jsr MoveBGPointer ; Move that pointer!
+	 jsr MoveBGPointer ; Move! That! pointer!
 	 jsr BufferLinkBG ; Link the BG to the tileset
 	 lda #$21
 	 sta VMDATAL
@@ -178,8 +210,13 @@ start:
 	lda #$0
 	; sta TRIPTYCHOFINTEREST
 	jsr GetTrypticFromCursor
-	jsr UpdateTriptych
-	jsr RefreshScreen
+	;jsr UpdateTriptych
+	; jsr RefreshScreen
+	lda #8 ; Test
+	sta CURSORX ; Test
+	jsr TestTrip ; Test
+	sta CURSORY; Test
+	jsr TestTrip ; Test
 	lda #$1b
 	ldx #$324
 	jsr SelectGraphicsTile
