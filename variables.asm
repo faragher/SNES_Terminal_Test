@@ -40,9 +40,9 @@ GLYPHBINDEX = $242
 ; Variable Initialization
 acc8
 INITRAM:
- lda #39				; Initialize text at bottom of screen - fixes off by one
+; lda #1				; Initialize text at bottom of screen - fixes off by one
 ; sta SCREENINDEXY 
- sta $210E ; BG1 Vertical Position
+; sta $210E ; BG1 Vertical Position
 	lda #30
 ;	sta THIRTYFRAME
 ;	stz STREAMBUFFERWRITEw ; Zero out buffer indices
@@ -53,8 +53,8 @@ INITRAM:
 	stz CURSORY
 	stz CURSORX+1
 	stz CURSORY+1
-;	stz SCREENINDEXSCRATCH
-;	stz SCREENINDEXSCRATCH+1
+	stz SCREENINDEXSCRATCH
+	stz SCREENINDEXSCRATCH+1
 	stz BUFFERMEMORYINDEX
 ;	stz BACKGROUNDMEMORYINDEX
 	stz BUFFERMEMORYINDEX+1
@@ -67,8 +67,8 @@ INITRAM:
 ;	stz TWO+1
 ;	stz ZERO
 ;	stz ZERO+1
-;	stz GLYPHAINDEX
-;	stz GLYPHBINDEX
-;	stz GLYPHAINDEX+1
-;	stz GLYPHBINDEX+1
+	stz GLYPHAINDEX
+	stz GLYPHBINDEX
+	stz GLYPHAINDEX+1
+	stz GLYPHBINDEX+1
 	rts

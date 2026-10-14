@@ -14,20 +14,29 @@ TestTrip:
 	sta BUFFERMEMORYINDEX ; We need to deal with this for Triptych purposes
 
 ; Compute Tilemap address from X/Y
-; -- 32 tiles per Y
+; -- 30 tiles per Y
 	lda CURSORY
-	jsr ACCMul32
+	jsr ACCMul30
+	asl
+	asl
+	asl
+	asl
 	sta SCRATCH
 ; -- 3 tiles per Triptych
 	lda CURSORX
 	lsr ; /2
 	lsr ; /4
 	sta TRIPTYCHOFINTEREST
+	jsr ACCMul3
+	asl ; x2
+	asl ; x4
+	asl
+	asl
 	clc
 	adc SCRATCH
 ; -- Four bytes per tile
-	asl ; x2
-	asl ; x4
+	;asl ; x2
+	;asl ; x4
 	; sta BACKGROUNDMEMORYINDEX ; I Probably utterly incorrect
 
 ; Set VRAM Address

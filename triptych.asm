@@ -142,6 +142,20 @@ ACCMul32:
 	asl ; x16
 	asl ; x32
 	rts
+	
+ACCMul30:
+	sta MATHSCRATCH
+	asl ; x2
+	asl ; x4
+	asl ; x8
+	asl ; x16
+	asl ; x32
+	clc
+	sec
+	sbc MATHSCRATCH
+	sec
+	sbc MATHSCRATCH
+	rts
 
 ACCMul40:
 	pha
@@ -161,8 +175,12 @@ ACCMul40:
 	
 ACCMul3:
 	phx
+	php
 	tax
+	acc8
 	lda TriLookup,X ; Lookup Mul by 3 (range 0-30 out) - No error handling!
+	;and #$00ff
+	plp
 	plx
 	rts
 

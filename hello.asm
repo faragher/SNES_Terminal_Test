@@ -157,13 +157,20 @@ start:
 	;sta TRIPTYCHOFINTEREST
 	;jsr GetTrypticFromCursor
 	;jsr UpdateTriptych
-	jsr RefreshScreen
-	lda #3 ; Test
+	;jsr RefreshScreen
+	lda #6 ; Test
+	sta CURSORX ; Test
+	jsr TestTrip ; Test
+	lda #1 ; Test
 	sta CURSORX ; Test
 	jsr TestTrip ; Test
 	lda #3 ; Test
 	sta CURSORY; Test
+	lda #6 ; Test
+	sta CURSORX ; Test
 	jsr TestTrip ; Test
+	lda #11
+	sta CURSORX
 	jsr TestTrip ; Test
 	lda #$1b
 	ldx #$324
@@ -205,7 +212,7 @@ nmi:
 	 dec
 	 sta THIRTYFRAME
 	 ; Position Screen
-	 lda #$fe ; Load Screen Position 0-255
+	 lda #$ff ; Load Screen Position 0-255
 	 sta $210E ; BG1 Vertical Position
 	 ;lda SCREENINDEXY ; Load Screen Position 0-255
 	 ;sta $210E ; BG1 Vertical Position
