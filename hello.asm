@@ -343,7 +343,7 @@ BufferLinkBG:
 		bne @BottomLine
 	;; Bottom Empty Buffer
 	lda #$2724 ; Another character
-	ldx $0
+	ldx #$0
 	@EmptyLine:
 		sta VMDATAL
 		inx
