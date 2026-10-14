@@ -59,4 +59,6 @@ dkms.conf
 
 build.sh
 build.bat
-./rom
+./rom/*
+*.dbg
+
