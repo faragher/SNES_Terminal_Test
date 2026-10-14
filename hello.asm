@@ -33,7 +33,6 @@ START_TM_ADDR  = VRAM_BG1 + 32*START_Y + START_X
 hello_str: .asciiz "Hello, World!"
 palette: .incbin "palette1.bin"
   .incbin "palette2.bin"
-
 .include "variables.asm"
 
 
@@ -46,10 +45,12 @@ start:
    xce
    rep #$10        ; X/Y 16-bit
    sep #$20        ; A 8-bit
-
+	 .a8
+	 
    ; Clear registers
    ldx #$33
-	 jsr ClearVRAM
+	 nop
+	 ;jsr ClearVRAM
 	 jsr INITRAM
 
 	

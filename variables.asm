@@ -1,3 +1,14 @@
+; Macros
+
+.macro acc8
+  sep #$20        ; A 8-bit
+	.a8
+.endmacro
+
+.macro acc16
+	rep #$20
+	.a16
+.endmacro
 ; Variable Definitions
 
 
@@ -38,7 +49,7 @@ GLYPHBINDEX = $242
 ;SCRATCHGLYPH = $24b ; Redundant with GLYPHA position
 
 ; Variable Initialization
-
+acc8
 INITRAM:
  lda #39				; Initialize text at bottom of screen - fixes off by one
 ; sta SCREENINDEXY 
