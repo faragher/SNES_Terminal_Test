@@ -1,5 +1,5 @@
 ; Update Triptych
-TestTrip:
+UpdateTriptych:
 	.a16
 	rep #$20 ; A 16-bit
 ; Compute Character Buffer pos from X/Y

@@ -34,10 +34,10 @@
 .include "video.asm"
 .include "test.asm"
 VRAM_CHARSET   = $0000 ; must be at $1000 boundary
-VRAM_BG1       = $1000 ; must be at $0400 boundary
-VRAM_BG2       = $1400 ; must be at $0400 boundary
-VRAM_BG3       = $1800 ; must be at $0400 boundary
-VRAM_BG4       = $1C00 ; must be at $0400 boundary
+VRAM_BG1       = $3000 ; must be at $0400 boundary
+VRAM_BG2       = $3800 ; must be at $0400 boundary
+VRAM_BG3       = $3C00 ; must be at $0400 boundary
+VRAM_BG4       = $4000 ; must be at $0400 boundary
 START_X        = 0
 START_Y        = 0
 START_TM_ADDR  = VRAM_BG1 + 32*START_Y + START_X
@@ -157,25 +157,25 @@ start:
 	;sta TRIPTYCHOFINTEREST
 	;jsr GetTrypticFromCursor
 	;jsr UpdateTriptych
-	;jsr RefreshScreen
-	lda #6 ; Test
-	sta CURSORX ; Test
-	jsr TestTrip ; Test
-	lda #1 ; Test
-	sta CURSORX ; Test
-	jsr TestTrip ; Test
-	lda #3 ; Test
-	sta CURSORY; Test
-	lda #6 ; Test
-	sta CURSORX ; Test
-	jsr TestTrip ; Test
-	lda #11
-	sta CURSORX
-	jsr TestTrip ; Test
+	jsr RefreshScreen
+	;lda #6 ; Test
+	;sta CURSORX ; Test
+	;jsr TestTrip ; Test
+	;lda #1 ; Test
+	;sta CURSORX ; Test
+	;jsr TestTrip ; Test
+	;lda #3 ; Test
+	;sta CURSORY; Test
+	;lda #6 ; Test
+	;sta CURSORX ; Test
+	;jsr TestTrip ; Test
+	;lda #11
+	;sta CURSORX
+	;jsr TestTrip ; Test
 	lda #$1b
 	ldx #$324
-	jsr SelectGraphicsTile
-	jsr PushTile
+	;jsr SelectGraphicsTile
+	;jsr PushTile
 ;@enable_display:
    ; Show BG1
    lda #$01
@@ -427,23 +427,30 @@ IncCursor:
 	rts
 
 IncCursor4:
-	clc
 	phx
+	pha
+	php
 	lda CURSORX
+	ldy CURSORY
+	clc
 	adc #$04
 	tax
-	cpx #$40
+	cpx #40
 	bcc @NotEOL
 	ldx #$00
 	iny
-	cpy #$24
-	bne @NotEOL
+	cpy #24
+	bcc @NotEOL
 	ldy #$24 ; Breaks screen scroll for clearing purposes
 	@NotEOL:
 	txa
+	and #$00ff
 	sta CURSORX
 	tya
+	and #$00ff
 	sta CURSORY
+	plp
+	pla
 	plx
 	rts
 
@@ -463,7 +470,7 @@ RefreshScreen:
 	stz CURSORY
 	@WriteTriptych:
 	ldx SCREENINDEXSCRATCH
-	jsr GetTrypticFromCursor
+	;jsr GetTrypticFromCursor
 	jsr UpdateTriptych
 	inx
 	inx
@@ -492,7 +499,7 @@ FillScreenBuffer:
 	@FSBloop:
 	jsr PutCharBuffer
 	inx
-	cpx #768
+	cpx #960
 	bne @FSBloop
 	ply
 	plx
