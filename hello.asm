@@ -4,6 +4,18 @@
 .i16    ; X/Y are 16 bits
 .a8     ; A is 8 bits
 
+; Macros
+
+.macro acc8
+  sep #$20        ; A 8-bit
+	.a8
+.endmacro
+
+.macro acc16
+	rep #$20
+	.a16
+.endmacro
+
 .include "snes.inc"
 .include "charmap.inc"
 
@@ -141,16 +153,18 @@ start:
 	 sta VMDATAH
 
 	jsr FillScreenBuffer
-	lda #$0
-	; sta TRIPTYCHOFINTEREST
-	jsr GetTrypticFromCursor
-	jsr UpdateTriptych
+	;lda #$0
+	;sta TRIPTYCHOFINTEREST
+	;jsr GetTrypticFromCursor
+	;jsr UpdateTriptych
 	jsr RefreshScreen
-	lda #8 ; Test
-	;sta CURSORX ; Test
-	;jsr TestTrip ; Test
-	;sta CURSORY; Test
-	;jsr TestTrip ; Test
+	lda #3 ; Test
+	sta CURSORX ; Test
+	jsr TestTrip ; Test
+	lda #3 ; Test
+	sta CURSORY; Test
+	jsr TestTrip ; Test
+	jsr TestTrip ; Test
 	lda #$1b
 	ldx #$324
 	jsr SelectGraphicsTile

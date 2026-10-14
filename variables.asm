@@ -1,14 +1,3 @@
-; Macros
-
-.macro acc8
-  sep #$20        ; A 8-bit
-	.a8
-.endmacro
-
-.macro acc16
-	rep #$20
-	.a16
-.endmacro
 ; Variable Definitions
 
 
@@ -60,15 +49,15 @@ INITRAM:
 ;	stz STREAMBUFFERWRITEw+1
 ;	stz STREAMBUFFERREADw
 ;	stz STREAMBUFFERREADw+1
-;	stz CURSORX
-;	stz CURSORY
-;	stz CURSORX+1
-;	stz CURSORY+1
+	stz CURSORX
+	stz CURSORY
+	stz CURSORX+1
+	stz CURSORY+1
 ;	stz SCREENINDEXSCRATCH
 ;	stz SCREENINDEXSCRATCH+1
-;	stz BUFFERMEMORYINDEX
+	stz BUFFERMEMORYINDEX
 ;	stz BACKGROUNDMEMORYINDEX
-;	stz BUFFERMEMORYINDEX+1
+	stz BUFFERMEMORYINDEX+1
 ;	stz BACKGROUNDMEMORYINDEX+1
 ;	lda #1
 ;	sta ONE
